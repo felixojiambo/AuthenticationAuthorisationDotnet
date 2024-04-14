@@ -2,8 +2,9 @@ using Microsoft.AspNetCore.Identity;
 
 namespace AuthenticationAuthorisation.Models
 {
-    public class AppUser:IdentityUser
+    public class AppUser : IdentityUser
     {
-    public String FullName{get;set;}    
+        public String FullName { get; set; }
+
     }
 }

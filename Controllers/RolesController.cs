@@ -121,13 +121,13 @@ namespace AuthenticationAuthorisation.Controllers
 //             }
 
 //             return BadRequest("Role creation failed.");
-            
+
 //         }
 
 //         [HttpGet]
 //         public async Task<ActionResult<IEnumerable<RoleResponseDto>>> GetRoles()
 //         {
-            
+
 
 //             // list of roles with total users in each role 
 
@@ -161,7 +161,7 @@ namespace AuthenticationAuthorisation.Controllers
 //             }
 
 //             return BadRequest("Role deletion failed.");
-            
+
 //         }
 
 

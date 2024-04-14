@@ -55,6 +55,27 @@ namespace AuthenticationAuthorisation.Controllers
                 });
             }
         }
+ [AllowAnonymous]
+        [HttpPost("forgot-password")]
+        public async Task<ActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
+        {
+            var isEmailSent = await _accountService.SendPasswordResetEmailAsync(forgotPasswordDto.Email);
+
+            if (!isEmailSent)
+            {
+                return BadRequest(new AuthResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "Failed to send email"
+                });
+            }
+
+            return Ok(new AuthResponseDto
+            {
+                IsSuccess = true,
+                Message = "Email Sent with password reset link"
+            });
+        }
 
         [HttpGet("detail")]
         public async Task<ActionResult<UserDetailDto>> GetUserDetail()
