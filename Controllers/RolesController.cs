@@ -2,7 +2,6 @@ using AuthenticationAuthorisation.Dtos;
 using AuthenticationAuthorisation.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 
 namespace AuthenticationAuthorisation.Controllers
 {

@@ -1,17 +1,14 @@
-using System.Text;
+using AuthenticationAuthorisation.Configuration;
 using AuthenticationAuthorisation.Data;
 using AuthenticationAuthorisation.Models;
-using AuthenticationAuthorisation.Services; // Ensure this namespace is included
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using AuthenticationAuthorisation.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 SQLitePCL.Batteries.Init();
-
-var JwtSetting = builder.Configuration.GetSection("JWTSetting");
 
 // Add services to the container.
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source=auth.db"));
@@ -22,55 +19,30 @@ builder.Services.AddIdentity<AppUser, IdentityRole>().AddEntityFrameworkStores<A
 builder.Services.AddScoped<AccountService>();
 builder.Services.AddScoped<RolesService>();
 
-builder.Services.AddAuthentication(opt =>
-{
-    opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(opt =>
-{
-    opt.SaveToken = true;
-    opt.RequireHttpsMetadata = false;
-    opt.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidAudience = JwtSetting["ValidAudience"],
-        ValidIssuer = JwtSetting["ValidIssuer"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSetting.GetSection("securityKey").Value!))
-    };
-});
+// Register JwtConfiguration
+builder.Services.AddSingleton<JwtConfiguration>();
 
+// Add authorization services
+builder.Services.AddAuthorization();
+
+// Add controller services
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
+
+// Configure JWT authentication using JwtConfiguration
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        // Retrieve JwtConfiguration from the service provider
+#pragma warning disable ASP0000 // Do not call 'IServiceCollection.BuildServiceProvider' in 'ConfigureServices'
+        var jwtConfig = builder.Services.BuildServiceProvider().GetRequiredService<JwtConfiguration>();
+#pragma warning restore ASP0000 // Do not call 'IServiceCollection.BuildServiceProvider' in 'ConfigureServices'
+        jwtConfig.ConfigureJwtBearerOptions(options);
+    });
+
+// Add Swagger services
 builder.Services.AddSwaggerGen(c =>
 {
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Description = @"JWT Authorization Example:'Bearer {token}",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
-    });
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                },
-                Scheme = "Bearer",
-                Name = "Bearer",
-                In = ParameterLocation.Header
-            },
-            new List<string>()
-        }
-    });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
 });
 
 var app = builder.Build();
@@ -79,7 +51,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API v1"));
 }
 
 app.UseHttpsRedirection();
