@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 SQLitePCL.Batteries.Init();
@@ -39,11 +41,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         jwtConfig.ConfigureJwtBearerOptions(options);
     });
 
-// Add Swagger services
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
-});
+// Add Swagger services using SwaggerConfig
+builder.Services.AddSwaggerGen(SwaggerConfig.AddSwagger);
 
 var app = builder.Build();
 
