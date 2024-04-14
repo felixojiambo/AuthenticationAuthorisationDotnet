@@ -7,8 +7,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-
+//using SQLitePCL;
 var builder = WebApplication.CreateBuilder(args);
+SQLitePCL.Batteries.Init();
+
 var JwtSetting=builder.Configuration.GetSection("JWTSetting");
 // Add services to the container.
 builder.Services.AddDbContext<AppDbContext>(options=>options.UseSqlite("Data Source=auth.db"));
