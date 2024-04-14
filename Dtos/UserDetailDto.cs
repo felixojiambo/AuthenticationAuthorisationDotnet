@@ -1,4 +1,4 @@
-namespace API.Dtos
+namespace AuthenticationAuthorisation.Dtos
 {
     public class UserDetailDto
     {

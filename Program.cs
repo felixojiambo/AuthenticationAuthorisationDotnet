@@ -1,63 +1,76 @@
 using System.Text;
 using AuthenticationAuthorisation.Data;
 using AuthenticationAuthorisation.Models;
+using AuthenticationAuthorisation.Services; // Ensure this namespace is included
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-//using SQLitePCL;
+
 var builder = WebApplication.CreateBuilder(args);
 SQLitePCL.Batteries.Init();
 
-var JwtSetting=builder.Configuration.GetSection("JWTSetting");
-// Add services to the container.
-builder.Services.AddDbContext<AppDbContext>(options=>options.UseSqlite("Data Source=auth.db"));
-builder.Services.AddIdentity<AppUser,IdentityRole>().AddEntityFrameworkStores<AppDbContext>()
-.AddDefaultTokenProviders();
+var JwtSetting = builder.Configuration.GetSection("JWTSetting");
 
-builder.Services.AddAuthentication(opt=>{
-    opt.DefaultAuthenticateScheme=JwtBearerDefaults.AuthenticationScheme;
-   opt.DefaultChallengeScheme=JwtBearerDefaults.AuthenticationScheme;
-   opt.DefaultAuthenticateScheme=JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(opt=>{
-    opt.SaveToken=true;
-    opt.RequireHttpsMetadata=false;
-    opt.TokenValidationParameters=new TokenValidationParameters
+// Add services to the container.
+builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source=auth.db"));
+builder.Services.AddIdentity<AppUser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
+
+// Register the AccountService and RolesService
+builder.Services.AddScoped<AccountService>();
+builder.Services.AddScoped<RolesService>();
+
+builder.Services.AddAuthentication(opt =>
+{
+    opt.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    opt.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(opt =>
+{
+    opt.SaveToken = true;
+    opt.RequireHttpsMetadata = false;
+    opt.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer=true,
-        ValidateAudience=true,
-        ValidateLifetime=true,
-        ValidateIssuerSigningKey=true,
-        ValidAudience=JwtSetting["ValidAudience"],
-        ValidIssuer=JwtSetting["ValidIssuer"],
-        IssuerSigningKey=new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSetting.GetSection("securityKey").Value!))
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidAudience = JwtSetting["ValidAudience"],
+        ValidIssuer = JwtSetting["ValidIssuer"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSetting.GetSection("securityKey").Value!))
     };
 });
+
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c=>{
-    c.AddSecurityDefinition("Bearer",new OpenApiSecurityScheme{
-        Description=@"JWT Authorization Example:'Bearer felixhasdhffgh",
-        Name="Authorization",
-        In=ParameterLocation.Header,
-        Type=SecuritySchemeType.ApiKey,
-        Scheme="Bearer"
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = @"JWT Authorization Example:'Bearer {token}",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
     });
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement(){{
-        new OpenApiSecurityScheme{
-            Reference=new  OpenApiReference{
-                Type=ReferenceType.SecurityScheme,
-                Id="Bearer"
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                },
+                Scheme = "Bearer",
+                Name = "Bearer",
+                In = ParameterLocation.Header
             },
-            Scheme="ouath2",
-            Name="Bearer",
-            In=ParameterLocation.Header
-        },
-        new List<String>()
-    }});
+            new List<string>()
+        }
+    });
 });
 
 var app = builder.Build();
